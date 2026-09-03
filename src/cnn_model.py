@@ -16,24 +16,26 @@ PATIENCE = 10
 
 
 class SpectralCNN(nn.Module):
-    def __init__(self, n_classes, kernel_size, filters, pooled_length=16):
+    # Matches the architecture described in Hu et al. (2015), "Deep
+    # Convolutional Neural Networks for Hyperspectral Image Classification":
+    # one convolutional layer, one max-pooling layer, one fully-connected
+    # (hidden) layer, one output layer.
+    def __init__(self, n_classes, n_bands, kernel_size, filters, hidden_dim=64):
         super().__init__()
         pad = kernel_size // 2
-        self.conv = nn.Sequential(
-            nn.Conv1d(1, filters, kernel_size, padding=pad),
-            nn.ReLU(),
-            nn.Conv1d(filters, filters * 2, kernel_size, padding=pad),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool1d(pooled_length),
-        )
-        self.head = nn.Linear(filters * 2 * pooled_length, n_classes)
+        self.conv = nn.Conv1d(1, filters, kernel_size, padding=pad)
+        self.pool = nn.MaxPool1d(2)
+        pooled_len = n_bands // 2
+        self.fc1 = nn.Linear(filters * pooled_len, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, n_classes)
 
     def forward(self, x):
-        # x: (batch, n_bands) -> (batch, 1, n_bands)
-        x = x.unsqueeze(1)
-        x = self.conv(x)
+        x = x.unsqueeze(1)              # (batch, 1, n_bands)
+        x = torch.relu(self.conv(x))
+        x = self.pool(x)
         x = x.flatten(start_dim=1)
-        return self.head(x)
+        x = torch.relu(self.fc1(x))
+        return self.fc2(x)
 
 
 def train_cnn(X_train, y_train, X_val, y_val, n_classes, kernel_size, filters,
@@ -48,7 +50,7 @@ def train_cnn(X_train, y_train, X_val, y_val, n_classes, kernel_size, filters,
         TensorDataset(X_train_t, y_train_t), batch_size=BATCH_SIZE, shuffle=True
     )
 
-    model = SpectralCNN(n_classes, kernel_size, filters)
+    model = SpectralCNN(n_classes, X_train.shape[1], kernel_size, filters)
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     criterion = nn.CrossEntropyLoss()
 
@@ -79,6 +81,9 @@ def train_cnn(X_train, y_train, X_val, y_val, n_classes, kernel_size, filters,
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
                 break
+
+        if epoch % 10 == 0:
+            print(f"    epoch {epoch:3d}  val macro F1={val_f1:.4f}  best={best_val_f1:.4f}")
 
     model.load_state_dict(best_state)
     return model, best_val_f1, epoch + 1

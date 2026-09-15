@@ -8,12 +8,19 @@ from sklearn.metrics import f1_score
 N_BOOTSTRAP = 10000
 RANDOM_STATE = 42
 
-BAND_SETS = {
-    "all_204_bands": None,
-    "lasso_30": np.array([3,4,5,6,7,8,17,18,19,30,31,32,33,34,35,36,37,38,39,80,81,82,105,145,146,148,149,150,151,152]),
-    "mrmr_30": np.array([4,5,6,7,8,9,10,11,12,13,14,15,26,38,43,46,48,49,50,51,52,53,54,55,56,57,59,150,151,152]),
-    "stg_30": np.array([1,2,3,4,5,6,7,8,9,10,16,17,18,37,38,39,40,41,42,43,73,98,100,101,102,103,104,105,106,148]),
-}
+
+def load_band_sets():
+    k_sweep_data = np.load("data/salinas_k_sweep.npz")
+    lasso_30 = k_sweep_data["lasso_order"][:30]
+    mrmr_30 = k_sweep_data["mrmr_order"][:30]
+    stg_data = np.load("data/salinas_stg_selection.npz")
+    stg_30 = stg_data["stg_bands"]
+    return {
+        "all_204_bands": None,
+        "lasso_30": lasso_30,
+        "mrmr_30": mrmr_30,
+        "stg_30": stg_30,
+    }
 
 
 def bootstrap_standard_error(y_true, y_pred, n_bootstrap=N_BOOTSTRAP, random_state=RANDOM_STATE):
@@ -46,6 +53,8 @@ def paired_bootstrap_test(y_true, pred_a, pred_b, n_bootstrap=N_BOOTSTRAP, rando
 if __name__ == "__main__":
     data = np.load("data/salinas_split.npz")
     X_test, y_test = data["X_test"], data["y_test"]
+
+    BAND_SETS = load_band_sets()
 
     predictions = {}
     print("--- Loading models and generating predictions ---")

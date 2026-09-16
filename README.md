@@ -15,7 +15,7 @@ necessary, rather than assuming all 204 are needed.
 **Salinas scene** (AVIRIS sensor, agricultural valley, California), 204
 spectral bands, 16 land-cover classes, 54,129 labeled pixels. Public,
 no registration required:
-https://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes
+[https://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes](https://zenodo.org/records/15771735)
 
 Download `Salinas_corrected.mat` and `Salinas_gt.mat` into `data/` (not
 included in this repo, see `.gitignore`).
@@ -77,8 +77,7 @@ tree (p=0.266).
 
 ## Report
 
-Full methodology, citations, and discussion: `paper.pdf` (LaTeX source
-in `paper.tex`, ACL format).
+Full methodology, citations, and discussion: `Research_Project_B_Hauch.pdf`.
 
 ## Limitations
 
